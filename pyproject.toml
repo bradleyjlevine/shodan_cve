@@ -1,0 +1,19 @@
+[project]
+name = "shodan-cve"
+version = "0.1.0"
+description = "MCP application for the Shodan CVEDB API"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "fastmcp>=2.12.5",
+    "requests>=2.32.5",
+    "fastapi>=0.108.0",
+    "uvicorn>=0.24.0",
+]
+
+[project.scripts]
+shodan-cve = "shodan_cve.cli:main"
+
+[build-system]
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
