@@ -98,6 +98,21 @@ class ShodanCVEDBClient:
         """Parse CPE data from the API response"""
         # Handle case where data is a string (direct CPE)
         if isinstance(data, str):
+            # Parse CPE string to extract vendor, product, version
+            # CPE 2.3 format: cpe:2.3:part:vendor:product:version:update:edition:lang:sw_edition:target_sw:target_hw:other
+            try:
+                parts = data.split(":")
+                if len(parts) >= 5 and parts[0] == "cpe":
+                    return CPE(
+                        cpe23=data,
+                        vendor=parts[3] if parts[3] != "*" else None,
+                        product=parts[4] if parts[4] != "*" else None,
+                        version=parts[5] if len(parts) > 5 and parts[5] != "*" else None
+                    )
+            except Exception as e:
+                logger.warning(f"Failed to parse CPE string {data}: {e}")
+
+            # Return with just the CPE string if parsing failed
             return CPE(
                 cpe23=data,
                 vendor=None,
