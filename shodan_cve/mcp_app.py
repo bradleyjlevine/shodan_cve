@@ -44,11 +44,15 @@ def _convert_to_dict(obj: Any) -> Dict[str, Any]:
 
 @mcp.tool(
     name="get_cve",
-    description="Get detailed information about a specific CVE by ID",
+    description="""Look up a specific CVE directly by its ID (e.g., CVE-2021-44228). Use this tool to get comprehensive details about a known vulnerability.
+
+Example usage:
+  get_cve(cve_id="CVE-2021-44228")  # Looks up Log4Shell vulnerability
+  get_cve(cve_id="CVE-2023-21036")  # Looks up a specific Windows vulnerability""",
     output_schema={"type": "object"}
 )
 def get_cve(cve_id: str) -> Union[Dict[str, Any], Dict[str, Any]]:
-    """Get information about a specific CVE"""
+    """Get complete information about a specific CVE by its ID (CVE-YYYY-NNNNN format)"""
     try:
         if not cve_id:
             return {"error": {"message": "Missing required parameter: cve_id", "code": 400}}
@@ -67,7 +71,14 @@ def get_cve(cve_id: str) -> Union[Dict[str, Any], Dict[str, Any]]:
 
 @mcp.tool(
     name="search_cpes",
-    description="Search for CPEs (Common Platform Enumeration) by product name",
+    description="""Search for CPEs (Common Platform Enumeration) by product name.
+Use this to find platform identifiers, not to look up specific CVEs.
+
+Example usage:
+  search_cpes(product="log4j")       # Find CPE identifiers for Log4j
+  search_cpes(product="windows 10")  # Find CPE identifiers for Windows 10
+
+Note: To look up a specific CVE by ID, use the get_cve tool instead.""",
     output_schema={"type": "object"}
 )
 def search_cpes(
@@ -80,6 +91,22 @@ def search_cpes(
     try:
         if not product:
             return {"error": {"message": "Missing required parameter: product", "code": 400}}
+
+        # Check if the product parameter is actually a CVE ID
+        if product and product.startswith("CVE-"):
+            # Return a helpful error message suggesting the correct tool
+            logger.info(f"User attempted to search for CVE ID {product} using search_cpes tool")
+            return {
+                "error": {
+                    "message": f"It looks like you're trying to look up a specific CVE ({product}). "
+                              f"Please use the get_cve tool instead with: get_cve(cve_id=\"{product}\")",
+                    "code": 400,
+                    "suggestion": {
+                        "tool": "get_cve",
+                        "params": {"cve_id": product}
+                    }
+                }
+            }
 
         cpes_request = CPEsRequest(
             product=product,
@@ -101,7 +128,15 @@ def search_cpes(
 
 @mcp.tool(
     name="search_cves",
-    description="Search for CVEs by product name or CPE identifier",
+    description="""Search for CVEs by product name or CPE identifier.
+Use this to find vulnerabilities related to a product, not to look up a specific CVE.
+
+Example usage:
+  search_cves(product="log4j")             # Find all vulnerabilities for Log4j
+  search_cves(cpe23="cpe:2.3:a:apache:log4j:2.0")  # Find vulnerabilities for a specific version
+  search_cves(product="windows", is_kev=True)  # Find only known exploited vulnerabilities
+
+Note: To look up a specific CVE by ID, use the get_cve tool instead.""",
     output_schema={"type": "object"}
 )
 def search_cves(
@@ -117,6 +152,22 @@ def search_cves(
 ) -> Union[Dict[str, Any], Dict[str, Any]]:
     """Search for CVEs by product name or CPE"""
     try:
+        # Check if the product parameter is actually a CVE ID
+        if product and product.startswith("CVE-"):
+            # Return a helpful error message suggesting the correct tool
+            logger.info(f"User attempted to search for CVE ID {product} using search_cves tool")
+            return {
+                "error": {
+                    "message": f"It looks like you're trying to look up a specific CVE ({product}). "
+                              f"Please use the get_cve tool instead with: get_cve(cve_id=\"{product}\")",
+                    "code": 400,
+                    "suggestion": {
+                        "tool": "get_cve",
+                        "params": {"cve_id": product}
+                    }
+                }
+            }
+
         # At least one of cpe23 or product is required
         if not cpe23 and not product:
             return {
