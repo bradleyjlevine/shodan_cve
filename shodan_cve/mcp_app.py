@@ -47,11 +47,18 @@ def _convert_to_dict(obj: Any) -> Dict[str, Any]:
     description="""Look up a specific CVE directly by its ID (e.g., CVE-2021-44228). Use this tool to get comprehensive details about a known vulnerability.
 
 Example usage:
-  get_cve(cve_id="CVE-2021-44228")  # Looks up Log4Shell vulnerability
-  get_cve(cve_id="CVE-2023-21036")  # Looks up a specific Windows vulnerability""",
+  get_cve(cve_id="CVE-2021-44228")                        # Looks up Log4Shell vulnerability
+  get_cve(cve_id="CVE-2023-21036")                        # Looks up a specific Windows vulnerability
+  get_cve(cve_id="CVE-2021-44228", include_cpes=True)     # Include full CPE list (WARNING: may be very large)
+
+Parameters:
+  cve_id (str): The CVE identifier in CVE-YYYY-NNNNN format.
+  include_cpes (bool): Whether to include the list of affected CPE identifiers in the response.
+    Defaults to False. WARNING: For widely-affecting CVEs (e.g. Log4Shell), the CPE list can
+    contain hundreds of entries and significantly increase response size.""",
     output_schema={"type": "object"}
 )
-def get_cve(cve_id: str) -> Union[Dict[str, Any], Dict[str, Any]]:
+def get_cve(cve_id: str, include_cpes: bool = False) -> Union[Dict[str, Any], Dict[str, Any]]:
     """Get complete information about a specific CVE by its ID (CVE-YYYY-NNNNN format)"""
     try:
         if not cve_id:
@@ -63,7 +70,10 @@ def get_cve(cve_id: str) -> Union[Dict[str, Any], Dict[str, Any]]:
         if isinstance(result, ErrorResponse):
             return {"error": {"message": result.error, "code": result.status_code}}
 
-        return _convert_to_dict(result)
+        result_dict = _convert_to_dict(result)
+        if not include_cpes:
+            result_dict.pop("cpes", None)
+        return result_dict
     except Exception as e:
         logger.exception("Error handling get_cve request")
         return {"error": {"message": str(e), "code": 500}}
