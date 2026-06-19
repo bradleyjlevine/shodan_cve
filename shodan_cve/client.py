@@ -8,7 +8,7 @@ import requests
 
 from shodan_cve.models import (
     CPE, CPEsRequest, CPEsResponse, CVE, CVERequest, CVEsRequest,
-    CVEsResponse, ErrorResponse
+    CVESummary, CVEsResponse, EUVD, EUVDRequest, EUVDSummary, ErrorResponse
 )
 
 
@@ -66,6 +66,7 @@ class ShodanCVEDBClient:
                 published_time=data.get("published_time", ""),
                 cvss_v2=data.get("cvss_v2"),
                 cvss_v3=data.get("cvss_v3"),
+                cvss_v4=data.get("cvss_v4"),
                 cvss=data.get("cvss"),
                 cvss_version=data.get("cvss_version"),
                 epss=data.get("epss"),
@@ -74,7 +75,23 @@ class ShodanCVEDBClient:
                 propose_action=data.get("propose_action"),
                 ransomware_campaign=data.get("ransomware_campaign"),
                 cpes=[self._parse_cpe(cpe) for cpe in data.get("cpes", [])],
-                references=data.get("references", [])
+                references=data.get("references", []),
+                euvd=self._parse_euvd_summary(data.get("euvd"))
+            )
+
+        elif response_type == EUVD:
+            return EUVD(
+                euvd_id=data.get("euvd_id", ""),
+                description=data.get("description", ""),
+                published_time=data.get("published_time", ""),
+                cvss=data.get("cvss"),
+                cvss_version=data.get("cvss_version"),
+                epss=data.get("epss"),
+                assigner=data.get("assigner"),
+                references=data.get("references", []),
+                products=data.get("products", []),
+                vendors=data.get("vendors", []),
+                cve=self._parse_cve_summary(data.get("cve"))
             )
 
         elif response_type == CVEsResponse:
@@ -93,6 +110,47 @@ class ShodanCVEDBClient:
         return data  # type: ignore
 
     # _parse_cvss method removed as we're now handling CVSS scores as direct float values
+
+    def _parse_euvd_summary(self, data: Any) -> Optional[EUVDSummary]:
+        """Parse embedded EUVD data from a CVE response"""
+        if not isinstance(data, dict):
+            return None
+
+        return EUVDSummary(
+            id=data.get("id", ""),
+            description=data.get("description", ""),
+            published_time=data.get("published_time", ""),
+            cvss=data.get("cvss"),
+            cvss_version=data.get("cvss_version"),
+            epss=data.get("epss"),
+            assigner=data.get("assigner"),
+            references=data.get("references", []),
+            products=data.get("products", []),
+            vendors=data.get("vendors", [])
+        )
+
+    def _parse_cve_summary(self, data: Any) -> Optional[CVESummary]:
+        """Parse embedded CVE data from an EUVD response"""
+        if not isinstance(data, dict):
+            return None
+
+        return CVESummary(
+            id=data.get("id", ""),
+            summary=data.get("summary", ""),
+            published_time=data.get("published_time", ""),
+            cvss_v2=data.get("cvss_v2"),
+            cvss_v3=data.get("cvss_v3"),
+            cvss_v4=data.get("cvss_v4"),
+            cvss=data.get("cvss"),
+            cvss_version=data.get("cvss_version"),
+            epss=data.get("epss"),
+            ranking_epss=data.get("ranking_epss"),
+            kev=data.get("kev", False),
+            propose_action=data.get("propose_action"),
+            ransomware_campaign=data.get("ransomware_campaign"),
+            cpes=[self._parse_cpe(cpe) for cpe in data.get("cpes", [])],
+            references=data.get("references", [])
+        )
 
     def _parse_cpe(self, data: Any) -> CPE:
         """Parse CPE data from the API response"""
@@ -142,6 +200,11 @@ class ShodanCVEDBClient:
         """Get information about a specific CVE"""
         endpoint = f"/cve/{quote(request.cve_id)}"
         return self._make_request("GET", endpoint, response_type=CVE)
+
+    def get_euvd(self, request: EUVDRequest) -> Union[EUVD, ErrorResponse]:
+        """Get information about a specific EUVD"""
+        endpoint = f"/euvd/{quote(request.euvd_id)}"
+        return self._make_request("GET", endpoint, response_type=EUVD)
 
     def search_cpes(self, request: CPEsRequest) -> Union[CPEsResponse, ErrorResponse]:
         """Search for CPEs by product name"""

@@ -6,6 +6,7 @@ This is an MCP (Messaging Control Protocol) application that provides an interfa
 
 - Access to Shodan CVEDB API endpoints:
   - Retrieve information about specific CVEs by ID
+  - Retrieve information about specific EUVD/EUVID records by ID
   - Search for CPEs by product name
   - Search for CVEs by product name or CPE
 - Support for multiple transport protocols:
@@ -93,6 +94,7 @@ Get information about a specific CVE by ID.
 
 Parameters:
 - `cve_id`: The CVE ID to retrieve (e.g., "CVE-2021-44228")
+- `include_cpes`: Include affected CPE identifiers in the response (optional, default: false)
 
 Example:
 ```json
@@ -101,6 +103,25 @@ Example:
   "method": "get_cve",
   "params": {
     "cve_id": "CVE-2021-44228"
+  }
+}
+```
+
+#### get_euvd
+
+Get information about a specific EUVD/EUVID by ID.
+
+Parameters:
+- `euvd_id`: The EUVD ID to retrieve (e.g., "EUVD-2024-16003")
+- `include_cpes`: Include linked CVE CPE identifiers when present (optional, default: false)
+
+Example:
+```json
+{
+  "id": "2",
+  "method": "get_euvd",
+  "params": {
+    "euvd_id": "EUVD-2024-16003"
   }
 }
 ```
@@ -118,7 +139,7 @@ Parameters:
 Example:
 ```json
 {
-  "id": "2",
+  "id": "3",
   "method": "search_cpes",
   "params": {
     "product": "log4j"
@@ -144,7 +165,7 @@ Parameters:
 Example:
 ```json
 {
-  "id": "3",
+  "id": "4",
   "method": "search_cves",
   "params": {
     "product": "log4j",
@@ -161,7 +182,7 @@ Check if the application is running.
 Example:
 ```json
 {
-  "id": "4",
+  "id": "5",
   "method": "ping",
   "params": {}
 }

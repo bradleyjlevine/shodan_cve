@@ -7,7 +7,7 @@ from fastmcp import FastMCP
 
 from shodan_cve.client import ShodanCVEDBClient
 from shodan_cve.models import (
-    CPEsRequest, CVERequest, CVEsRequest, ErrorResponse
+    CPEsRequest, CVERequest, CVEsRequest, EUVDRequest, ErrorResponse
 )
 
 
@@ -63,6 +63,18 @@ def get_cve(cve_id: str, include_cpes: bool = False) -> Union[Dict[str, Any], Di
     try:
         if not cve_id:
             return {"error": {"message": "Missing required parameter: cve_id", "code": 400}}
+        if cve_id.startswith("EUVD-"):
+            return {
+                "error": {
+                    "message": f"It looks like you're trying to look up a specific EUVD ({cve_id}). "
+                              f"Please use the get_euvd tool instead with: get_euvd(euvd_id=\"{cve_id}\")",
+                    "code": 400,
+                    "suggestion": {
+                        "tool": "get_euvd",
+                        "params": {"euvd_id": cve_id}
+                    }
+                }
+            }
 
         cve_request = CVERequest(cve_id=cve_id)
         result = client.get_cve(cve_request)
@@ -76,6 +88,53 @@ def get_cve(cve_id: str, include_cpes: bool = False) -> Union[Dict[str, Any], Di
         return result_dict
     except Exception as e:
         logger.exception("Error handling get_cve request")
+        return {"error": {"message": str(e), "code": 500}}
+
+
+@mcp.tool(
+    name="get_euvd",
+    description="""Look up a specific EUVD/EUVID directly by its ID (e.g., EUVD-2024-16003). Use this tool to get European Union vulnerability details and any linked CVE record.
+
+Example usage:
+  get_euvd(euvd_id="EUVD-2024-16003")                     # Looks up a specific EUVD vulnerability
+  get_euvd(euvd_id="EUVD-2024-16003", include_cpes=True)  # Include linked CVE CPE list when present
+
+Parameters:
+  euvd_id (str): The EUVD identifier in EUVD-YYYY-NNNNN format.
+  include_cpes (bool): Whether to include the linked CVE CPE identifiers when a linked CVE is present.
+    Defaults to False because linked CVE CPE lists can be large.""",
+    output_schema={"type": "object"}
+)
+def get_euvd(euvd_id: str, include_cpes: bool = False) -> Union[Dict[str, Any], Dict[str, Any]]:
+    """Get complete information about a specific EUVD by its ID (EUVD-YYYY-NNNNN format)"""
+    try:
+        if not euvd_id:
+            return {"error": {"message": "Missing required parameter: euvd_id", "code": 400}}
+        if euvd_id.startswith("CVE-"):
+            return {
+                "error": {
+                    "message": f"It looks like you're trying to look up a specific CVE ({euvd_id}). "
+                              f"Please use the get_cve tool instead with: get_cve(cve_id=\"{euvd_id}\")",
+                    "code": 400,
+                    "suggestion": {
+                        "tool": "get_cve",
+                        "params": {"cve_id": euvd_id}
+                    }
+                }
+            }
+
+        euvd_request = EUVDRequest(euvd_id=euvd_id)
+        result = client.get_euvd(euvd_request)
+
+        if isinstance(result, ErrorResponse):
+            return {"error": {"message": result.error, "code": result.status_code}}
+
+        result_dict = _convert_to_dict(result)
+        if not include_cpes and isinstance(result_dict.get("cve"), dict):
+            result_dict["cve"].pop("cpes", None)
+        return result_dict
+    except Exception as e:
+        logger.exception("Error handling get_euvd request")
         return {"error": {"message": str(e), "code": 500}}
 
 
@@ -114,6 +173,19 @@ def search_cpes(
                     "suggestion": {
                         "tool": "get_cve",
                         "params": {"cve_id": product}
+                    }
+                }
+            }
+        if product and product.startswith("EUVD-"):
+            logger.info(f"User attempted to search for EUVD ID {product} using search_cpes tool")
+            return {
+                "error": {
+                    "message": f"It looks like you're trying to look up a specific EUVD ({product}). "
+                              f"Please use the get_euvd tool instead with: get_euvd(euvd_id=\"{product}\")",
+                    "code": 400,
+                    "suggestion": {
+                        "tool": "get_euvd",
+                        "params": {"euvd_id": product}
                     }
                 }
             }
@@ -174,6 +246,19 @@ def search_cves(
                     "suggestion": {
                         "tool": "get_cve",
                         "params": {"cve_id": product}
+                    }
+                }
+            }
+        if product and product.startswith("EUVD-"):
+            logger.info(f"User attempted to search for EUVD ID {product} using search_cves tool")
+            return {
+                "error": {
+                    "message": f"It looks like you're trying to look up a specific EUVD ({product}). "
+                              f"Please use the get_euvd tool instead with: get_euvd(euvd_id=\"{product}\")",
+                    "code": 400,
+                    "suggestion": {
+                        "tool": "get_euvd",
+                        "params": {"euvd_id": product}
                     }
                 }
             }

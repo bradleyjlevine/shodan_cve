@@ -17,6 +17,12 @@ class CVERequest:
 
 
 @dataclass
+class EUVDRequest:
+    """Request to fetch a specific EUVD by ID"""
+    euvd_id: str
+
+
+@dataclass
 class CPEsRequest:
     """Request to search for CPEs by product name"""
     product: str
@@ -52,15 +58,31 @@ class CPE:
 
 
 @dataclass
-class CVE:
-    """CVE vulnerability information"""
-    cve_id: str
+class EUVDSummary:
+    """EUVD reference embedded in a CVE response"""
+    id: str
+    description: str
+    published_time: str
+    cvss: Optional[float] = None
+    cvss_version: Optional[str] = None
+    epss: Optional[float] = None
+    assigner: Optional[str] = None
+    references: List[str] = field(default_factory=list)
+    products: List[str] = field(default_factory=list)
+    vendors: List[str] = field(default_factory=list)
+
+
+@dataclass
+class CVESummary:
+    """CVE reference embedded in an EUVD response"""
+    id: str
     summary: str
     published_time: str
     cvss_v2: Optional[float] = None
     cvss_v3: Optional[float] = None
+    cvss_v4: Optional[float] = None
     cvss: Optional[float] = None
-    cvss_version: Optional[str] = None
+    cvss_version: Optional[Union[str, int]] = None
     epss: Optional[float] = None
     ranking_epss: Optional[float] = None
     kev: bool = False
@@ -68,6 +90,43 @@ class CVE:
     ransomware_campaign: Optional[str] = None
     cpes: List[CPE] = field(default_factory=list)
     references: List[str] = field(default_factory=list)
+
+
+@dataclass
+class CVE:
+    """CVE vulnerability information"""
+    cve_id: str
+    summary: str
+    published_time: str
+    cvss_v2: Optional[float] = None
+    cvss_v3: Optional[float] = None
+    cvss_v4: Optional[float] = None
+    cvss: Optional[float] = None
+    cvss_version: Optional[Union[str, int]] = None
+    epss: Optional[float] = None
+    ranking_epss: Optional[float] = None
+    kev: bool = False
+    propose_action: Optional[str] = None
+    ransomware_campaign: Optional[str] = None
+    cpes: List[CPE] = field(default_factory=list)
+    references: List[str] = field(default_factory=list)
+    euvd: Optional[EUVDSummary] = None
+
+
+@dataclass
+class EUVD:
+    """EUVD vulnerability information"""
+    euvd_id: str
+    description: str
+    published_time: str
+    cvss: Optional[float] = None
+    cvss_version: Optional[str] = None
+    epss: Optional[float] = None
+    assigner: Optional[str] = None
+    references: List[str] = field(default_factory=list)
+    products: List[str] = field(default_factory=list)
+    vendors: List[str] = field(default_factory=list)
+    cve: Optional[CVESummary] = None
 
 
 @dataclass
