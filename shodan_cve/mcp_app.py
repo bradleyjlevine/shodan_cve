@@ -56,7 +56,8 @@ Parameters:
   include_cpes (bool): Whether to include the list of affected CPE identifiers in the response.
     Defaults to False. WARNING: For widely-affecting CVEs (e.g. Log4Shell), the CPE list can
     contain hundreds of entries and significantly increase response size.""",
-    output_schema={"type": "object"}
+    output_schema={"type": "object"},
+    annotations={"readOnlyHint": True, "destructiveHint": False, "idempotentHint": True, "openWorldHint": True}
 )
 def get_cve(cve_id: str, include_cpes: bool = False) -> Union[Dict[str, Any], Dict[str, Any]]:
     """Get complete information about a specific CVE by its ID (CVE-YYYY-NNNNN format)"""
@@ -103,7 +104,8 @@ Parameters:
   euvd_id (str): The EUVD identifier in EUVD-YYYY-NNNNN format.
   include_cpes (bool): Whether to include the linked CVE CPE identifiers when a linked CVE is present.
     Defaults to False because linked CVE CPE lists can be large.""",
-    output_schema={"type": "object"}
+    output_schema={"type": "object"},
+    annotations={"readOnlyHint": True, "destructiveHint": False, "idempotentHint": True, "openWorldHint": True}
 )
 def get_euvd(euvd_id: str, include_cpes: bool = False) -> Union[Dict[str, Any], Dict[str, Any]]:
     """Get complete information about a specific EUVD by its ID (EUVD-YYYY-NNNNN format)"""
@@ -148,7 +150,8 @@ Example usage:
   search_cpes(product="windows 10")  # Find CPE identifiers for Windows 10
 
 Note: To look up a specific CVE by ID, use the get_cve tool instead.""",
-    output_schema={"type": "object"}
+    output_schema={"type": "object"},
+    annotations={"readOnlyHint": True, "destructiveHint": False, "idempotentHint": True, "openWorldHint": True}
 )
 def search_cpes(
     product: str,
@@ -219,7 +222,8 @@ Example usage:
   search_cves(product="windows", is_kev=True)  # Find only known exploited vulnerabilities
 
 Note: To look up a specific CVE by ID, use the get_cve tool instead.""",
-    output_schema={"type": "object"}
+    output_schema={"type": "object"},
+    annotations={"readOnlyHint": True, "destructiveHint": False, "idempotentHint": True, "openWorldHint": True}
 )
 def search_cves(
     cpe23: Optional[str] = None,
