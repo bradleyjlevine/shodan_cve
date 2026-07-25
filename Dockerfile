@@ -8,13 +8,8 @@ RUN pip install --no-cache-dir uv
 # Copy project files
 COPY . /app/
 
-# Create a virtual environment using uv
-RUN uv venv
-
-# Activate the virtual environment and install dependencies
-RUN . ./.venv/bin/activate && \
-    uv pip install --no-cache-dir -e . && \
-    uv pip install --no-cache-dir requests fastapi uvicorn
+# Install dependencies from the lock file
+RUN uv sync --frozen --no-cache
 
 # Expose ports for HTTP transport and health server
 EXPOSE 8088 8089
